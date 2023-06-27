@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -43,7 +44,7 @@ namespace WpfAppTest
     {
         private static readonly HttpClient http = new() { BaseAddress = new Uri("https://zheka003.planfix.ru/rest/") };
 
-        public Connection SelectedConnection
+        public Connection? SelectedConnection
         {
             get => _SelectedConnection;
             set => Set(ref _SelectedConnection, value);
@@ -63,12 +64,12 @@ namespace WpfAppTest
 
         static public ObservableCollection<Connection> ConnectionsList { get; set; } = new();
         static private ICollectionView _collection = CollectionViewSource.GetDefaultView(ConnectionsList);
-        private Connection _SelectedConnection;
+        private Connection? _SelectedConnection;
         private string _ConnectionFilter = string.Empty;
 
 
         private RelayCommand? launchOfficeCommand;
-        
+
         private readonly string IikoRMSPath = Environment.ExpandEnvironmentVariables("%ProgramW6432%\\iiko\\iikoRMS");
         private readonly string IikoChainPath = Environment.ExpandEnvironmentVariables("%ProgramW6432%\\iiko\\iikoChain");
         private readonly string AnyDeskPath = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%\\AnyDesk\\AnyDesk.exe");
@@ -90,19 +91,19 @@ namespace WpfAppTest
 
                         string port = "443";
                         string protocol = "https";
-                        
+
 
                         if (addressPort.Length > 1)
-                        { 
+                        {
                             port = addressPort[1];
                             protocol = "http";
                         }
-                       
+
                         XmlReader reader;
 
                         try
                         {
-                            reader = XmlReader.Create($"{protocol}://{server.Address}/resto/get_server_info.jsp?encoding=UTF-8"); 
+                            reader = XmlReader.Create($"{protocol}://{server.Address}/resto/get_server_info.jsp?encoding=UTF-8");
                         }
                         catch (Exception ex)
                         {
@@ -110,12 +111,13 @@ namespace WpfAppTest
                             return;
                         }
 
-                        XElement xml = XDocument.Load(reader).Element("r");
+                        XElement? xml = XDocument.Load(reader)?.Element("r");
 
-                        string fullVersion = xml.Element("version")?.Value;
-                        bool isChain = Equals(xml.Element("edition")?.Value, "chain");
+                        string? fullVersion = xml?.Element("version")?.Value;
+
+                        bool isChain = Equals(xml?.Element("edition")?.Value, "chain");
                         string launchExec = System.IO.Path.Combine(isChain ? IikoChainPath : IikoRMSPath,
-                            fullVersion.Substring(0, fullVersion.Length - 2), @"BackOffice.exe");
+                            fullVersion is null ? "" : fullVersion[..^2], @"BackOffice.exe");
 
                         string type = isChain ? "Chain" : "RMS";
 
@@ -134,7 +136,7 @@ namespace WpfAppTest
                             return;
                         }
 
-                        DirectoryInfo di = Directory.CreateDirectory(System.IO.Path.Combine(
+                        DirectoryInfo di = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(
                             Environment.ExpandEnvironmentVariables(@"%AppData%\iiko"), type, addressPort[0], "config"));
                         new XDocument(
                             new XElement("config",
@@ -154,8 +156,33 @@ namespace WpfAppTest
             }
         }
 
+        public RelayCommand CallbackCommand
+        {
+            get
+            {
+                return callbackCommand ??
+                    (callbackCommand = new RelayCommand(obj =>
+                        {
+                        },
+                        obj => false));
+            }
+        }
+
+        public RelayCommand CloseApplicationCommand
+        {
+            get 
+            {
+                return exitApplicationCommand ??
+                    (exitApplicationCommand = new RelayCommand(obj =>
+                    {
+                    },
+                    obj => true));
+            }
+        }
+
         private RelayCommand? launchAnyDeskCommand;
-        
+        private RelayCommand? callbackCommand;
+        private RelayCommand? exitApplicationCommand;
 
         public RelayCommand LaunchAnyDeskCommand
         {
@@ -203,22 +230,14 @@ namespace WpfAppTest
 
         }
 
+
         static private async void LoadConnections()
         {
-            using var response = await http.PostAsJsonAsync("directory/608/entry/list",
-                new { offset = 0, pageSize = 100, fields = "name, key, parentKey, 1454, 1456, 1458, 1460, 1462" });
-
-            var data = await response.Content.ReadFromJsonAsync<DirectoryEntryListResponse>();
-
-            data?.directoryEntries?.ForEach(entry =>
-                {
-                    if (entry is null) return;
-
-                    if (entry?.customFieldData is not null)
-                    {
-                        ConnectionsList.Add(new Connection(entry.customFieldData));
-                    }
-                });
+            await foreach (PlanFix.DirectoryEntry? i in PlanFix.GetEntryList(http, 608))
+            {
+                if (i?.customFieldData is not null)
+                    ConnectionsList.Add(new Connection(i.customFieldData));
+            }
         }
 
         #region INotifyPropertyChanged implementation
@@ -241,6 +260,79 @@ namespace WpfAppTest
         
     }
 
+    public static class PlanFix
+    {
+        public class Field
+        {
+            public int id { get; set; } = 0;
+            public string name { get; set; } = string.Empty;
+            public int type { get; set; } = 0;
+            public int objectType { get; set; } = 0;
+        }
+
+        public class CustomFieldDatum
+        {
+            public Field? field { get; set; }
+            public string value { get; set; } = string.Empty;
+            public string stringValue { get; set; } = string.Empty;
+        }
+
+        public class Directory
+        {
+            public int id { get; set; }
+            public string name { get; set; } = string.Empty;
+            public List<Field>? fields { get; set; }
+        }
+
+        public class DirectoryEntry
+        {
+            public int key { get; set; }
+            public int parentKey { get; set; }
+            public string name { get; set; } = string.Empty;
+            public List<CustomFieldDatum>? customFieldData { get; set; }
+        }
+
+        class DirectoryEntryListResponse
+        {
+            public string result { get; set; } = string.Empty;
+            public List<DirectoryEntry>? directoryEntries { get; set; }
+        }
+
+        class DirectoryByIdResponse
+        {
+            public string result { get; set; } = string.Empty;
+            public PlanFix.Directory? directory { get; set; }
+        }
+
+        static async IAsyncEnumerable<string?> GetFieldsId(HttpClient http, int id)
+        {
+            using var resp = await http.GetAsync($"directory/{id}?fields=fields");
+            DirectoryByIdResponse? r = await resp.Content.ReadFromJsonAsync<DirectoryByIdResponse>();
+            if (r?.directory?.fields is not null)
+            {
+                foreach (var f in r.directory.fields)
+                    yield return f.id.ToString();
+            }
+            yield return null;
+        }
+
+        public static async IAsyncEnumerable<DirectoryEntry?> GetEntryList(HttpClient http, int id)
+        {
+            string fieds = "name, key, parentKey"; await foreach (var n in GetFieldsId(http, 608)) { fieds += ", " + n; }
+
+            using var response = await http.PostAsJsonAsync($"directory/{id}/entry/list",
+                new { offset = 0, pageSize = 100, fields = fieds });
+
+            var data = await response.Content.ReadFromJsonAsync<DirectoryEntryListResponse>();
+
+            if (data?.directoryEntries != null)
+                foreach (var i in data.directoryEntries)
+                    yield return i;
+
+            yield return null;
+        }
+    }
+
     public class Connection : INotifyPropertyChanged
     {
         public string Client
@@ -248,9 +340,9 @@ namespace WpfAppTest
             get => _Client;
             set => Set(ref _Client, value);
         }
-        public string Name { get; set; }
-        public string Address { get; set; }
-        public string Login { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string Login { get; set; } = string.Empty;
 
         public string Password 
         {
@@ -262,10 +354,10 @@ namespace WpfAppTest
             set => Crypted_Password = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
         }
 
-        private string _Client;
-        private string Crypted_Password;
+        private string _Client = string.Empty;
+        private string? Crypted_Password;
 
-        public Connection(List<CustomFieldDatum> customFieldData)
+        public Connection(List<PlanFix.CustomFieldDatum> customFieldData)
         {
             foreach (var item in customFieldData)
             {
@@ -322,38 +414,5 @@ namespace WpfAppTest
             execute(parameter);
         }
     }
-
-    #region PlanFix Response Data
-
-    public class CustomFieldDatum
-    {
-        public Field? field { get; set; }
-        public string? value { get; set; }
-        public string? stringValue { get; set; }
-    }
-
-    public class DirectoryEntry
-    {
-        public int key { get; set; }
-        public int parentKey { get; set; }
-        public string? name { get; set; }  
-        public List<CustomFieldDatum>? customFieldData { get; set; }
-    }
-
-    public class Field
-    {
-        public int? id { get; set; }
-        public string? name { get; set; }
-        public int? type { get; set; }
-        public int? objectType { get; set; }
-    }
-
-    public class DirectoryEntryListResponse
-    {
-        public string? result { get; set; }
-        public List<DirectoryEntry>? directoryEntries { get; set; }
-    }
-
-    #endregion
 
 }

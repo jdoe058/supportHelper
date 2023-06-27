@@ -12,9 +12,11 @@
 
     <DockPanel>
         <TextBox Margin="2" DockPanel.Dock="Top" Text="{Binding ConnectionFilter, UpdateSourceTrigger=PropertyChanged}"/>
-        <UniformGrid DockPanel.Dock="Bottom" Rows="1">
+        <UniformGrid DockPanel.Dock="Bottom" Rows="2">
             <Button Margin="2" Content="Запустить Офис" Command="{Binding LaunchOfficeCommand}" CommandParameter="{Binding SelectedConnection}"/>
             <Button Margin="2" Content="Запустить АниДеск" Command="{Binding LaunchAnyDeskCommand}" CommandParameter="{Binding SelectedConnection}"/>
+            <Button Margin="2" Content="Позвонить" Command="{Binding CallbackCommand}" CommandParameter="{Binding SelectedConnection}"/>
+            <Button Margin="2" Content="Закрыть" Command="{Binding CloseApplicationCommand}" CommandParameter="{Binding SelectedConnection}"/>
             
         </UniformGrid>
         <ListBox ItemsSource="{Binding ConnectionsList}" SelectedItem="{Binding SelectedConnection}">
