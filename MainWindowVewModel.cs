@@ -6,6 +6,8 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Security.RightsManagement;
+using System.Text;
 using System.Windows;
 using System.Windows.Data;
 using System.Xml;
@@ -16,36 +18,66 @@ namespace supportHelper;
 
 public class MainWindowViewModel : BaseModel
 {
-    private readonly string AnyDeskPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\AnyDesk\AnyDesk.exe");
-    private readonly string IikoRMSPath = Environment.ExpandEnvironmentVariables(@"%ProgramW6432%\iiko\iikoRMS");
-    private readonly string IikoChainPath = Environment.ExpandEnvironmentVariables(@"%ProgramW6432%\iiko\iikoChain");
-   
-    static public ObservableCollection<ConnectionModel> ConnectionsList { get; set; } = new();
-    private static readonly ICollectionView _collection = CollectionViewSource.GetDefaultView(ConnectionsList); 
 
-    public string ConnectionFilter
+    #region Settings
+    public static string BaseAddress
     {
-        get => _ConnectionFilter;
+        get => Properties.Settings.Default.BaseAddress;
+        set => Properties.Settings.Default.BaseAddress = value;
+    }
+
+    public static int DirectoryId
+    {
+        get => Properties.Settings.Default.DirectoryId;
         set
         {
-            if (Set(ref _ConnectionFilter, value))
-            {
-                _collection.Refresh();
-            }
+            Properties.Settings.Default.DirectoryId = value;
         }
     }
-    private string _ConnectionFilter = string.Empty;
 
-    public ConnectionModel? SelectedConnection
+    public static string AccessToken
     {
-        get => _SelectedConnection;
-        set 
-        {
-            if (Set(ref _SelectedConnection, value)) ;
-        } 
+        get => Properties.Settings.Default.AccessToken;
+        set => Properties.Settings.Default.AccessToken = value;
     }
-    private ConnectionModel? _SelectedConnection;
 
+    public static string IikoRMSPath
+    {
+        get => Properties.Settings.Default.IikoRMSPath;
+        set => Properties.Settings.Default.IikoRMSPath = value;
+    }
+
+    public static string IikoChainPath
+    {
+        get => Properties.Settings.Default.IikoChainPath;
+        set => Properties.Settings.Default.IikoChainPath = value;
+    }
+
+    public static string AnyDeskPath
+    {
+        get => Properties.Settings.Default.AnyDeskPath;
+        set => Properties.Settings.Default.AnyDeskPath = value;
+    }
+
+    public static string IikoLogin
+    {
+        get => Properties.Settings.Default.IikoLogin;
+        set => Properties.Settings.Default.IikoLogin = value;
+    }
+
+    public static string IikoPassword
+    {
+        get => Encoding.UTF8.GetString(Convert.FromBase64String(Properties.Settings.Default.IikoPassword));
+        set => Properties.Settings.Default.IikoPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+    }
+
+    public static string AnyDeskPassword
+    {
+        get => Encoding.UTF8.GetString(Convert.FromBase64String(Properties.Settings.Default.AnyDeskPassword));
+        set => Properties.Settings.Default.AnyDeskPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+    }
+    #endregion
+    #region Command
     public RelayCommand LaunchOfficeCommand
     {
         get
@@ -56,6 +88,9 @@ public class MainWindowViewModel : BaseModel
                 {
                     return;
                 }
+
+                if (server.Address is null)
+                    return;
 
                 string[] addressPort = server.Address.Split(':');
                 //string address = addressPort[0];
@@ -163,37 +198,6 @@ public class MainWindowViewModel : BaseModel
     }
     private RelayCommand? callbackCommand;
 
-    public RelayCommand SettingsApplicationCommand
-    {
-        get
-        {
-            return settingsApplicationCommand ??= new RelayCommand(obj =>
-            {
-                MessageBox.Show("В процессе");
-                //throw new NotImplementedException();
-            },
-            obj => true);
-        }
-    }
-    private RelayCommand? settingsApplicationCommand;
-
-    public RelayCommand SaveConnectionModelCommand
-    {
-        get
-        {
-            return saveConnectionModelCommand ??= new RelayCommand(obj =>
-            { 
-                if (obj is ConnectionModel model) 
-                {
-                    PlanFixController.UpdateDirectoryEntry(608, model.ToDirectoryEntry());
-                }
-            },
-            obj => obj is ConnectionModel model);
-        }
-    }
-    private RelayCommand? saveConnectionModelCommand;
-
-    // TO-DO обьединить с SaveConnectionModelCommand
     public RelayCommand AddConnectionModelCommand
     {
         get
@@ -203,15 +207,15 @@ public class MainWindowViewModel : BaseModel
                 if (obj is ConnectionModel model)
                 {
                     PlanFixController.UpdateDirectoryEntry(608, model.ToDirectoryEntry(), true);
-                    //_collection.Refresh();
                 }
-            }, obj => obj is ConnectionModel model);
+            },
+            obj => obj is ConnectionModel model);
         }
     }
     RelayCommand? addConnectionModelCommand;
 
     public RelayCommand RemoveConnectionModel
-    { 
+    {
         get
         {
             return removeConnectionModel ??= new RelayCommand(obj =>
@@ -224,7 +228,54 @@ public class MainWindowViewModel : BaseModel
     }
     RelayCommand? removeConnectionModel;
 
-public MainWindowViewModel()
+
+    public RelayCommand SaveSettingsCommand
+    {
+        get => saveSettingsCommand ??= new RelayCommand(obj =>
+        { Properties.Settings.Default.Save(); });
+
+    }
+    private RelayCommand? saveSettingsCommand;
+
+    public RelayCommand ReloadSettingsCommand
+    {
+        get => reloadSettingsCommand ??= new RelayCommand(obj =>
+        { Properties.Settings.Default.Reload(); });
+    }
+    private RelayCommand? reloadSettingsCommand;
+
+    #endregion
+
+    static public ObservableCollection<ConnectionModel> ConnectionsList { get; set; } = new();
+    private static readonly ICollectionView _collection = CollectionViewSource.GetDefaultView(ConnectionsList); 
+
+    public string ConnectionFilter
+    {
+        get => _ConnectionFilter;
+        set
+        {
+            if (Set(ref _ConnectionFilter, value))
+            {
+                _collection.Refresh();
+            }
+        }
+    }
+    private string _ConnectionFilter = string.Empty;
+
+    public ConnectionModel? SelectedConnection
+    {
+        get => _SelectedConnection;
+        set 
+        {
+            Set(ref _SelectedConnection, value);
+        } 
+    }
+    private ConnectionModel? _SelectedConnection;
+
+
+
+
+    public MainWindowViewModel()
     {
         
         LoadConnectionsFromPlanfix();

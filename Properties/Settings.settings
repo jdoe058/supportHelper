@@ -1,6 +1,33 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="supportHelper.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="BaseAddress" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://zheka003.planfix.ru/rest/</Value>
+    </Setting>
+    <Setting Name="DirectoryId" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">608</Value>
+    </Setting>
+    <Setting Name="AccessToken" Type="System.String" Scope="User">
+      <Value Profile="(Default)">84466e5d2c61f49fe2bc068fda942283</Value>
+    </Setting>
+    <Setting Name="IikoRMSPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Program Files\iiko\iikoRMS</Value>
+    </Setting>
+    <Setting Name="IikoChainPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Program Files\iiko\iikoChain</Value>
+    </Setting>
+    <Setting Name="AnyDeskPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Program Files (x86)\AnyDesk\AnyDesk.exe</Value>
+    </Setting>
+    <Setting Name="IikoLogin" Type="System.String" Scope="User">
+      <Value Profile="(Default)">tb</Value>
+    </Setting>
+    <Setting Name="IikoPassword" Type="System.String" Scope="User">
+      <Value Profile="(Default)">cmVzdG8jdGI=</Value>
+    </Setting>
+    <Setting Name="AnyDeskPassword" Type="System.String" Scope="User">
+      <Value Profile="(Default)">VGIjMTQ3ODUy</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>

@@ -12,7 +12,7 @@ namespace supportHelper.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.5.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -20,6 +20,114 @@ namespace supportHelper.Properties {
         public static Settings Default {
             get {
                 return defaultInstance;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://zheka003.planfix.ru/rest/")]
+        public string BaseAddress {
+            get {
+                return ((string)(this["BaseAddress"]));
+            }
+            set {
+                this["BaseAddress"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("608")]
+        public int DirectoryId {
+            get {
+                return ((int)(this["DirectoryId"]));
+            }
+            set {
+                this["DirectoryId"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("84466e5d2c61f49fe2bc068fda942283")]
+        public string AccessToken {
+            get {
+                return ((string)(this["AccessToken"]));
+            }
+            set {
+                this["AccessToken"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files\\iiko\\iikoRMS")]
+        public string IikoRMSPath {
+            get {
+                return ((string)(this["IikoRMSPath"]));
+            }
+            set {
+                this["IikoRMSPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files\\iiko\\iikoChain")]
+        public string IikoChainPath {
+            get {
+                return ((string)(this["IikoChainPath"]));
+            }
+            set {
+                this["IikoChainPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe")]
+        public string AnyDeskPath {
+            get {
+                return ((string)(this["AnyDeskPath"]));
+            }
+            set {
+                this["AnyDeskPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("tb")]
+        public string IikoLogin {
+            get {
+                return ((string)(this["IikoLogin"]));
+            }
+            set {
+                this["IikoLogin"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("cmVzdG8jdGI=")]
+        public string IikoPassword {
+            get {
+                return ((string)(this["IikoPassword"]));
+            }
+            set {
+                this["IikoPassword"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("VGIjMTQ3ODUy")]
+        public string AnyDeskPassword {
+            get {
+                return ((string)(this["AnyDeskPassword"]));
+            }
+            set {
+                this["AnyDeskPassword"] = value;
             }
         }
     }

@@ -45,10 +45,11 @@ public class ConnectionModel : BaseModel, IEditableObject
         
         foreach (var item in directoryEntry.CustomFieldData)
         {
+            
             switch (item?.Field?.Name)
             {
-                case "Клиент": Client    = item.Value; clientId   = item.Field.Id; break;
-                case "Имя":    Name      = item.Value; nameId     = item.Field.Id; break;
+                case "Клиент": Client    = item.Value is null ? "" : item.Value; clientId   = item.Field.Id; break;
+                case "Имя":    Name      = item.Value is null ? "" : item.Value; nameId     = item.Field.Id; break;
                 case "Адрес":  Address   = item.Value; addressId  = item.Field.Id; break;
                 case "Логин":  Login     = item.Value; loginId    = item.Field.Id; break;
                 case "Пароль": _Password = item.Value; passwordId = item.Field.Id; break;
