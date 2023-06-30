@@ -21,8 +21,8 @@ public class ConnectionModel : BaseModel, IEditableObject
     {
         get => Encoding.UTF8.GetString(Convert.FromBase64String(string.IsNullOrWhiteSpace(_Password)
             ? string.IsNullOrWhiteSpace(Address)
-                ? "VGIjMTQ3ODUy"
-                : "cmVzdG8jdGI="
+                ? Properties.Settings.Default.AnyDeskPassword
+                : Properties.Settings.Default.IikoPassword
             : _Password));
         set => Set(ref _Password, value is null ? null : Convert.ToBase64String(Encoding.UTF8.GetBytes(value)));
     }
@@ -111,7 +111,7 @@ public class ConnectionModel : BaseModel, IEditableObject
         { 
             inEdit = false;
             backupCopy = null;
-            UpdateDirectoryEntry(608,ToDirectoryEntry());
+            UpdateDirectoryEntry(ToDirectoryEntry());
         }
     }
     #endregion

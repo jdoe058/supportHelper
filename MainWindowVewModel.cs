@@ -3,10 +3,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
-using System.Security.RightsManagement;
 using System.Text;
 using System.Windows;
 using System.Windows.Data;
@@ -18,65 +14,6 @@ namespace supportHelper;
 
 public class MainWindowViewModel : BaseModel
 {
-
-    #region Settings
-    public static string BaseAddress
-    {
-        get => Properties.Settings.Default.BaseAddress;
-        set => Properties.Settings.Default.BaseAddress = value;
-    }
-
-    public static int DirectoryId
-    {
-        get => Properties.Settings.Default.DirectoryId;
-        set
-        {
-            Properties.Settings.Default.DirectoryId = value;
-        }
-    }
-
-    public static string AccessToken
-    {
-        get => Properties.Settings.Default.AccessToken;
-        set => Properties.Settings.Default.AccessToken = value;
-    }
-
-    public static string IikoRMSPath
-    {
-        get => Properties.Settings.Default.IikoRMSPath;
-        set => Properties.Settings.Default.IikoRMSPath = value;
-    }
-
-    public static string IikoChainPath
-    {
-        get => Properties.Settings.Default.IikoChainPath;
-        set => Properties.Settings.Default.IikoChainPath = value;
-    }
-
-    public static string AnyDeskPath
-    {
-        get => Properties.Settings.Default.AnyDeskPath;
-        set => Properties.Settings.Default.AnyDeskPath = value;
-    }
-
-    public static string IikoLogin
-    {
-        get => Properties.Settings.Default.IikoLogin;
-        set => Properties.Settings.Default.IikoLogin = value;
-    }
-
-    public static string IikoPassword
-    {
-        get => Encoding.UTF8.GetString(Convert.FromBase64String(Properties.Settings.Default.IikoPassword));
-        set => Properties.Settings.Default.IikoPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
-    }
-
-    public static string AnyDeskPassword
-    {
-        get => Encoding.UTF8.GetString(Convert.FromBase64String(Properties.Settings.Default.AnyDeskPassword));
-        set => Properties.Settings.Default.AnyDeskPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
-    }
-    #endregion
     #region Command
     public RelayCommand LaunchOfficeCommand
     {
@@ -122,7 +59,9 @@ public class MainWindowViewModel : BaseModel
                 string? fullVersion = xml?.Element("version")?.Value;
 
                 bool isChain = Equals(xml?.Element("edition")?.Value, "chain");
-                string launchExec = System.IO.Path.Combine(isChain ? IikoChainPath : IikoRMSPath,
+                string launchExec = System.IO.Path.Combine(isChain 
+                    ? Properties.Settings.Default.IikoChainPath 
+                    : Properties.Settings.Default.IikoRMSPath,
                     fullVersion is null ? "" : fullVersion[..^2], @"BackOffice.exe");
 
                 string type = isChain ? "Chain" : "RMS";
@@ -157,8 +96,7 @@ public class MainWindowViewModel : BaseModel
                     )
                 ).Save(System.IO.Path.Combine(di.FullName, @"backclient.config.xml"));
                 _ = Process.Start(launchExec, $"/password={server.Password} /AdditionalTmpFolder={addressPort[0]}");
-            },
-                obj => obj is ConnectionModel s && !string.IsNullOrWhiteSpace(s.Address));
+            }, obj => obj is ConnectionModel s && !string.IsNullOrWhiteSpace(s.Address));
         }
     }
     private RelayCommand? launchOfficeCommand;
@@ -172,15 +110,14 @@ public class MainWindowViewModel : BaseModel
                 if (obj is ConnectionModel s)
                 {
                     using Process proc = new();
-                    proc.StartInfo.FileName = AnyDeskPath;
+                    proc.StartInfo.FileName = Properties.Settings.Default.AnyDeskPath;
                     proc.StartInfo.Arguments = $"{s.Login} --with-password";
                     proc.StartInfo.UseShellExecute = false;
                     proc.StartInfo.RedirectStandardInput = true;
                     _ = proc.Start();
                     proc.StandardInput.WriteLine(s.Password);
                 }
-            },
-                obj => obj is ConnectionModel s && string.IsNullOrWhiteSpace(s.Address));
+            }, obj => obj is ConnectionModel s && string.IsNullOrWhiteSpace(s.Address));
         }
     }
     private RelayCommand? launchAnyDeskCommand;
@@ -192,8 +129,7 @@ public class MainWindowViewModel : BaseModel
             return callbackCommand ??= new RelayCommand(obj =>
             {
                 throw new NotImplementedException();
-            },
-                    obj => false);
+            }, obj => false);
         }
     }
     private RelayCommand? callbackCommand;
@@ -206,7 +142,7 @@ public class MainWindowViewModel : BaseModel
             {
                 if (obj is ConnectionModel model)
                 {
-                    PlanFixController.UpdateDirectoryEntry(608, model.ToDirectoryEntry(), true);
+                    PlanFixController.UpdateDirectoryEntry(model.ToDirectoryEntry(), true);
                 }
             },
             obj => obj is ConnectionModel model);
@@ -218,62 +154,50 @@ public class MainWindowViewModel : BaseModel
     {
         get
         {
-            return removeConnectionModel ??= new RelayCommand(obj =>
-            {
-                if (obj is ConnectionModel model)
-                    PlanFixController.DeleteDirectoryEntry(608, model);
-            },
-            obj => obj is ConnectionModel model);
+            return removeConnectionModel ??= new RelayCommand(obj => 
+            { 
+                if (obj is ConnectionModel model) 
+                    PlanFixController.DeleteDirectoryEntry(model); 
+            }, obj => obj is ConnectionModel model);
         }
     }
     RelayCommand? removeConnectionModel;
 
-
-    public RelayCommand SaveSettingsCommand
-    {
-        get => saveSettingsCommand ??= new RelayCommand(obj =>
-        { Properties.Settings.Default.Save(); });
-
-    }
+    public RelayCommand SaveSettingsCommand { get => saveSettingsCommand ??= new RelayCommand(obj => { Properties.Settings.Default.Save(); }); }
     private RelayCommand? saveSettingsCommand;
 
-    public RelayCommand ReloadSettingsCommand
-    {
-        get => reloadSettingsCommand ??= new RelayCommand(obj =>
-        { Properties.Settings.Default.Reload(); });
-    }
+    public RelayCommand ReloadSettingsCommand { get => reloadSettingsCommand ??= new RelayCommand(obj => { Properties.Settings.Default.Reload(); }); }
     private RelayCommand? reloadSettingsCommand;
-
     #endregion
 
     static public ObservableCollection<ConnectionModel> ConnectionsList { get; set; } = new();
-    private static readonly ICollectionView _collection = CollectionViewSource.GetDefaultView(ConnectionsList); 
+    private static readonly ICollectionView _collection = CollectionViewSource.GetDefaultView(ConnectionsList);
+
+    public static string IikoPassword
+    {
+        get => Encoding.UTF8.GetString(Convert.FromBase64String(Properties.Settings.Default.IikoPassword));
+        set => Properties.Settings.Default.IikoPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+    }
+
+    public static string AnyDeskPassword
+    {
+        get => Encoding.UTF8.GetString(Convert.FromBase64String(Properties.Settings.Default.AnyDeskPassword));
+        set => Properties.Settings.Default.AnyDeskPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+    }
 
     public string ConnectionFilter
     {
         get => _ConnectionFilter;
-        set
-        {
-            if (Set(ref _ConnectionFilter, value))
-            {
-                _collection.Refresh();
-            }
-        }
+        set { if (Set(ref _ConnectionFilter, value))  _collection.Refresh(); }
     }
     private string _ConnectionFilter = string.Empty;
 
     public ConnectionModel? SelectedConnection
     {
         get => _SelectedConnection;
-        set 
-        {
-            Set(ref _SelectedConnection, value);
-        } 
+        set { Set(ref _SelectedConnection, value); } 
     }
     private ConnectionModel? _SelectedConnection;
-
-
-
 
     public MainWindowViewModel()
     {
@@ -286,15 +210,12 @@ public class MainWindowViewModel : BaseModel
         _collection.Filter += obj => obj is not ConnectionModel c
             || c.Name.Contains(ConnectionFilter, StringComparison.CurrentCultureIgnoreCase)
             || c.Client.Contains(ConnectionFilter, StringComparison.CurrentCultureIgnoreCase); ;
-
     }
     
     static private async void LoadConnectionsFromPlanfix()
     {
-        ConnectionsList.Clear();
-
         //TO-DO что не так, не пойму что
-        await foreach (PlanFixController.DirectoryEntry? i in PlanFixController.GetEntryList(608))
+        await foreach (PlanFixController.DirectoryEntry? i in PlanFixController.GetEntryList())
             if (i is not null && i.CustomFieldData is not null) 
                 ConnectionsList.Add(new ConnectionModel(i));
     }

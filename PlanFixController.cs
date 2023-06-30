@@ -10,25 +10,24 @@ namespace supportHelper;
 
 public static class PlanFixController
 {
-    private static readonly HttpClient client = new() { BaseAddress = new Uri("https://zheka003.planfix.ru/rest/") };
+    private static readonly HttpClient client = new() { BaseAddress = new Uri(Properties.Settings.Default.BaseAddress) };
 
-    static PlanFixController()
-    {
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "84466e5d2c61f49fe2bc068fda942283");
-    }
+    static PlanFixController() =>
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Properties.Settings.Default.AccessToken);
+    
 
-    public static async void DeleteDirectoryEntry(int id, ConnectionModel model)
+    public static async void DeleteDirectoryEntry(ConnectionModel model)
     {
-        using var response = await client.DeleteAsync($"directory/{id}/entry/{model.key}");
+        using var response = await client.DeleteAsync($"directory/{Properties.Settings.Default.DirectoryId}/entry/{model.key}");
         var data = await response.Content.ReadFromJsonAsync<Response>();
 
         if (response.StatusCode == HttpStatusCode.OK && data?.Result == "success")
             MainWindowViewModel.ConnectionsList.Remove(model);
     }
 
-    public static async void UpdateDirectoryEntry(int id, DirectoryEntry entry, bool add = false)
+    public static async void UpdateDirectoryEntry(DirectoryEntry entry, bool add = false)
     {
-        var method = $"directory/{id}/entry/";
+        var method = $"directory/{Properties.Settings.Default.DirectoryId}/entry/";
         if (!add) method += entry.Key;
 
 
@@ -45,11 +44,11 @@ public static class PlanFixController
         }
     }
     
-    public static async IAsyncEnumerable<DirectoryEntry?> GetEntryList(int id)
+    public static async IAsyncEnumerable<DirectoryEntry?> GetEntryList()
     {
-        string fieds = "name, key, parentKey"; await foreach (var n in GetFieldsIds(id)) { fieds += ", " + n; }
+        string fieds = "name, key, parentKey"; await foreach (var n in GetFieldsIds()) { fieds += ", " + n; }
 
-        using var response = await client.PostAsJsonAsync($"directory/{id}/entry/list",
+        using var response = await client.PostAsJsonAsync($"directory/{Properties.Settings.Default.DirectoryId}/entry/list",
             new { offset = 0, pageSize = 100, fields = fieds });
 
         var data = await response.Content.ReadFromJsonAsync<DirectoryEntryListResponse>();
@@ -59,9 +58,9 @@ public static class PlanFixController
                 yield return i;
     }
 
-    static async IAsyncEnumerable<string?> GetFieldsIds(int id)
+    static async IAsyncEnumerable<string?> GetFieldsIds()
     {
-        using var resp = await client.GetAsync($"directory/{id}?fields=fields");
+        using var resp = await client.GetAsync($"directory/{Properties.Settings.Default.DirectoryId}?fields=fields");
         DirectoryByIdResponse? r = await resp.Content.ReadFromJsonAsync<DirectoryByIdResponse>();
         if (r?.Directory?.Fields is not null)
             foreach (var f in r.Directory.Fields)

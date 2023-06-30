@@ -1,5 +1,4 @@
-﻿using supportHelper;
-using System.Windows;
+﻿using System.Windows;
 
 namespace supportHelper;
 

@@ -5,15 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:supportHelper"
         xmlns:properties="clr-namespace:supportHelper.Properties"
+        xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="700">
     <Window.DataContext>
         <local:MainWindowViewModel/>
     </Window.DataContext>
     <DockPanel>
-
         <Expander DockPanel.Dock="Right"  ExpandDirection="Left">
-            
             <StackPanel Width="300" Margin="3" Orientation="Vertical" >
                 <StackPanel DataContext="{Binding Path=(properties:Settings.Default)}">
                     <TextBlock Text="Настройки"/>
@@ -39,7 +38,16 @@
                     <TextBlock Text="iiko пароль" Foreground="Gray"/>
                     <TextBox Text="{Binding IikoPassword}"/>
                     <TextBlock Text="AnyDesk пароль" Foreground="Gray"/>
-                    <TextBox Text="{Binding AnyDeskPassword}"/>                    
+                    <TextBox Text="{Binding AnyDeskPassword}"/>
+                    <PasswordBox>
+                        <Behaviors:Interaction.Triggers>
+                            <Behaviors:EventTrigger EventName="PasswordChanged">
+                                <Behaviors:InvokeCommandAction 
+                                    Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=PasswordBox}}"
+                                    CommandParameter="{Binding ElementName=PasswordBox}"/>
+                            </Behaviors:EventTrigger>
+                        </Behaviors:Interaction.Triggers>
+                    </PasswordBox>
                 </StackPanel>
                 <UniformGrid Margin="3" Rows="1">
                     <Button Content="Отменить" Command="{Binding ReloadSettingsCommand}"/>
@@ -49,22 +57,39 @@
 
             </StackPanel>
         </Expander>
-        
         <TextBox Margin="2" DockPanel.Dock="Top" Text="{Binding ConnectionFilter, UpdateSourceTrigger=PropertyChanged}"/>
-        <UniformGrid DockPanel.Dock="Bottom" Columns="3">
-            <Button Margin="2" Content="Запустить Офис" Command="{Binding LaunchOfficeCommand}" CommandParameter="{Binding SelectedConnection}"/>
-            <Button Margin="2" Content="Запустить АниДеск" Command="{Binding LaunchAnyDeskCommand}" CommandParameter="{Binding SelectedConnection}"/>
-            <Button Margin="2" Content="Позвонить" Command="{Binding CallbackCommand}" CommandParameter="{Binding SelectedConnection}"/>
-            <Button Margin="2" Content="Дублировать" Command="{Binding AddConnectionModelCommand}" 
+        <Expander DockPanel.Dock="Bottom" ExpandDirection="Up" Header="Команды выбраному элемента">
+            <UniformGrid Columns="3">
+                <PasswordBox x:Name="PasswordBox" Margin="2"/>
+                <Button Margin="2" Content="Установить пароль">
+                    <Button.CommandParameter>
+                        <MultiBinding>
+                            <Binding ElementName="SelectedConnection"/>
+                            <Binding ElementName="PasswordBox"/>
+                        </MultiBinding>
+                    </Button.CommandParameter>
+                </Button>
+                
+                <Button Margin="2" Content="Запустить Офис" Command="{Binding LaunchOfficeCommand}" CommandParameter="{Binding SelectedConnection}"/>
+                <Button Margin="2" Content="Запустить АниДеск" Command="{Binding LaunchAnyDeskCommand}" CommandParameter="{Binding SelectedConnection}"/>
+                <Button Margin="2" Content="Дублировать" Command="{Binding AddConnectionModelCommand}" 
                     CommandParameter="{Binding SelectedConnection}"/>
-            <Button Margin="2" Content="Удалить" Command="{Binding RemoveConnectionModel}"
+                <Button Margin="2" Content="Удалить" Command="{Binding RemoveConnectionModel}"
                     CommandParameter="{Binding SelectedConnection}"/>
 
-        </UniformGrid>
-
+                <Button Margin="2" Content="Позвонить" Command="{Binding CallbackCommand}" CommandParameter="{Binding SelectedConnection}"/>
+            </UniformGrid>
+        </Expander>
         <DataGrid ItemsSource="{Binding ConnectionsList}" 
                   SelectedItem="{Binding SelectedConnection}" 
+                  AutoGenerateColumns="False"
+                  GridLinesVisibility="Vertical"
                   AlternatingRowBackground="LightGray">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Имя" Binding="{Binding Name}"/>
+                <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
+                <DataGridTextColumn Header="Логин" Binding="{Binding Login}"/>
+            </DataGrid.Columns>
             <DataGrid.GroupStyle>
                 <GroupStyle>
                     <GroupStyle.ContainerStyle>
