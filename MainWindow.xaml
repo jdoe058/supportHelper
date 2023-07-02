@@ -11,6 +11,9 @@
     <Window.DataContext>
         <local:MainWindowViewModel/>
     </Window.DataContext>
+    <Window.Resources>
+        <local:PasswordConverter x:Key="PasswordConverter"/>
+    </Window.Resources>
     <DockPanel>
         <Expander DockPanel.Dock="Right"  ExpandDirection="Left">
             <StackPanel Width="300" Margin="3" Orientation="Vertical" >
@@ -60,11 +63,10 @@
         <TextBox Margin="2" DockPanel.Dock="Top" Text="{Binding ConnectionFilter, UpdateSourceTrigger=PropertyChanged}"/>
         <Expander DockPanel.Dock="Bottom" ExpandDirection="Up" Header="Команды выбраному элемента">
             <UniformGrid Columns="3">
-                <PasswordBox x:Name="PasswordBox" Margin="2"/>
-                <Button Margin="2" Content="Установить пароль">
+                <Button Margin="2" Content="Установить пароль" Command="{Binding SetPasswordCommand}">
                     <Button.CommandParameter>
-                        <MultiBinding>
-                            <Binding ElementName="SelectedConnection"/>
+                        <MultiBinding Converter="{StaticResource PasswordConverter}">
+                            <Binding Path="SelectedConnection"/>
                             <Binding ElementName="PasswordBox"/>
                         </MultiBinding>
                     </Button.CommandParameter>
@@ -90,7 +92,16 @@
                 <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
                 <DataGridTextColumn Header="Логин" Binding="{Binding Login}"/>
             </DataGrid.Columns>
+            <Behaviors:Interaction.Triggers>
+                <Behaviors:EventTrigger EventName="MouseDoubleClick">
+                    <Behaviors:InvokeCommandAction Command="{Binding LaunchOfficeCommand}" 
+                                           CommandParameter="{Binding SelectedConnection}"/>
+                    <Behaviors:InvokeCommandAction Command="{Binding LaunchAnyDeskCommand}" 
+                                           CommandParameter="{Binding SelectedConnection}"/>
+                </Behaviors:EventTrigger>
+            </Behaviors:Interaction.Triggers>
             <DataGrid.GroupStyle>
+                <DataGrid.GroupStyle>
                 <GroupStyle>
                     <GroupStyle.ContainerStyle>
                         <Style TargetType="{x:Type GroupItem}">

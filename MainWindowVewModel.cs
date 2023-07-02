@@ -2,18 +2,55 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Xml;
 using System.Xml.Linq;
-
+using static supportHelper.PlanFixController;
 
 namespace supportHelper;
 
 public class MainWindowViewModel : BaseModel
 {
+    static public ObservableCollection<ConnectionModel> ConnectionsList { get; set; } = new();
+    private static readonly ICollectionView _collection = CollectionViewSource.GetDefaultView(ConnectionsList);
+
+    public string ConnectionFilter
+    {
+        get => _ConnectionFilter;
+        set { if (Set(ref _ConnectionFilter, value))  _collection.Refresh(); }
+    }
+    private string _ConnectionFilter = string.Empty;
+
+    public ConnectionModel? SelectedConnection
+    {
+        get => _SelectedConnection;
+        set { Set(ref _SelectedConnection, value); } 
+    }
+    private ConnectionModel? _SelectedConnection;
+
+    public MainWindowViewModel()
+    {
+        
+        LoadConnectionsFromPlanfix();
+
+        _collection.SortDescriptions.Add(new SortDescription("Name", ListSortDirection.Ascending));
+        _collection.SortDescriptions.Add(new SortDescription("Client", ListSortDirection.Ascending));
+        _collection.GroupDescriptions.Add(new PropertyGroupDescription("Client"));
+        _collection.Filter += obj => obj is not ConnectionModel c
+            || c.Name.Contains(ConnectionFilter, StringComparison.CurrentCultureIgnoreCase)
+            || c.Client.Contains(ConnectionFilter, StringComparison.CurrentCultureIgnoreCase); ;
+    }
+    
+    static private async void LoadConnectionsFromPlanfix()
+    {
+        await foreach (DirectoryEntry? i in GetEntryList())
+            if (i is not null && i.CustomFieldData is not null) 
+                ConnectionsList.Add(new ConnectionModel(i));
+    }
     #region Command
     public RelayCommand LaunchOfficeCommand
     {
@@ -59,8 +96,8 @@ public class MainWindowViewModel : BaseModel
                 string? fullVersion = xml?.Element("version")?.Value;
 
                 bool isChain = Equals(xml?.Element("edition")?.Value, "chain");
-                string launchExec = System.IO.Path.Combine(isChain 
-                    ? Properties.Settings.Default.IikoChainPath 
+                string launchExec = System.IO.Path.Combine(isChain
+                    ? Properties.Settings.Default.IikoChainPath
                     : Properties.Settings.Default.IikoRMSPath,
                     fullVersion is null ? "" : fullVersion[..^2], @"BackOffice.exe");
 
@@ -154,10 +191,10 @@ public class MainWindowViewModel : BaseModel
     {
         get
         {
-            return removeConnectionModel ??= new RelayCommand(obj => 
-            { 
-                if (obj is ConnectionModel model) 
-                    PlanFixController.DeleteDirectoryEntry(model); 
+            return removeConnectionModel ??= new RelayCommand(obj =>
+            {
+                if (obj is ConnectionModel model)
+                    PlanFixController.DeleteDirectoryEntry(model);
             }, obj => obj is ConnectionModel model);
         }
     }
@@ -169,54 +206,18 @@ public class MainWindowViewModel : BaseModel
     public RelayCommand ReloadSettingsCommand { get => reloadSettingsCommand ??= new RelayCommand(obj => { Properties.Settings.Default.Reload(); }); }
     private RelayCommand? reloadSettingsCommand;
     #endregion
+}
 
-    static public ObservableCollection<ConnectionModel> ConnectionsList { get; set; } = new();
-    private static readonly ICollectionView _collection = CollectionViewSource.GetDefaultView(ConnectionsList);
-
-    public static string IikoPassword
+public class PasswordConverter : IMultiValueConverter
+{
+    public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        get => Encoding.UTF8.GetString(Convert.FromBase64String(Properties.Settings.Default.IikoPassword));
-        set => Properties.Settings.Default.IikoPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+        if (values.Length > 1 && values[1] is PasswordBox pw && values[0] is ConnectionModel model)
+        {
+            return new Tuple<ConnectionModel, PasswordBox>(model, pw);
+        }
+        return null;
     }
 
-    public static string AnyDeskPassword
-    {
-        get => Encoding.UTF8.GetString(Convert.FromBase64String(Properties.Settings.Default.AnyDeskPassword));
-        set => Properties.Settings.Default.AnyDeskPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
-    }
-
-    public string ConnectionFilter
-    {
-        get => _ConnectionFilter;
-        set { if (Set(ref _ConnectionFilter, value))  _collection.Refresh(); }
-    }
-    private string _ConnectionFilter = string.Empty;
-
-    public ConnectionModel? SelectedConnection
-    {
-        get => _SelectedConnection;
-        set { Set(ref _SelectedConnection, value); } 
-    }
-    private ConnectionModel? _SelectedConnection;
-
-    public MainWindowViewModel()
-    {
-        
-        LoadConnectionsFromPlanfix();
-
-        _collection.SortDescriptions.Add(new SortDescription("Name", ListSortDirection.Ascending));
-        _collection.SortDescriptions.Add(new SortDescription("Client", ListSortDirection.Ascending));
-        _collection.GroupDescriptions.Add(new PropertyGroupDescription("Client"));
-        _collection.Filter += obj => obj is not ConnectionModel c
-            || c.Name.Contains(ConnectionFilter, StringComparison.CurrentCultureIgnoreCase)
-            || c.Client.Contains(ConnectionFilter, StringComparison.CurrentCultureIgnoreCase); ;
-    }
-    
-    static private async void LoadConnectionsFromPlanfix()
-    {
-        //TO-DO что не так, не пойму что
-        await foreach (PlanFixController.DirectoryEntry? i in PlanFixController.GetEntryList())
-            if (i is not null && i.CustomFieldData is not null) 
-                ConnectionsList.Add(new ConnectionModel(i));
-    }
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) { throw new NotImplementedException(); }
 }
