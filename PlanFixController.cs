@@ -48,22 +48,14 @@ public static class PlanFixController
     {
         string fieds = "name, key, parentKey"; await foreach (var n in GetFieldsIds()) { fieds += ", " + n; }
 
-        const int pageSize = 100;
-        
-        for (int offset = 0; ;offset+=pageSize)
-        {
-            using var response = await client.PostAsJsonAsync($"directory/{Properties.Settings.Default.DirectoryId}/entry/list",
-                new { offset, pageSize, fields = fieds });
+        using var response = await client.PostAsJsonAsync($"directory/{Properties.Settings.Default.DirectoryId}/entry/list",
+            new { offset = 0, pageSize = 100, fields = fieds });
 
-            var data = await response.Content.ReadFromJsonAsync<DirectoryEntryListResponse>();
-
-            if (data is null || data.DirectoryEntries is null || data.DirectoryEntries.Count == 0)
-                break;
-
-            if (data?.DirectoryEntries.Count > 0)
-                foreach (var i in data.DirectoryEntries)
-                    yield return i;
-        }
+        var data = await response.Content.ReadFromJsonAsync<DirectoryEntryListResponse>();
+       
+        if (data?.DirectoryEntries is not null)
+            foreach (var i in data.DirectoryEntries)
+                yield return i;
     }
 
     static async IAsyncEnumerable<string?> GetFieldsIds()

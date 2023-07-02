@@ -8,9 +8,6 @@
         xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="700">
-    <Window.Resources>
-        <local:PasswordConverter x:Key="PasswordConverter"/>
-    </Window.Resources>
     <Window.DataContext>
         <local:MainWindowViewModel/>
     </Window.DataContext>
@@ -31,50 +28,59 @@
                     <TextBox Margin="3,0,0,0" Text="{Binding AccessToken}"/>
                     <TextBlock Text="Id справочника (handbook= в адресе открытого справочника), для XML игнорируется"  TextWrapping="Wrap" Foreground="Gray"/>
                     <TextBox Text="{Binding DirectoryId}"/>
-                    <TextBlock Text="iiko логин по умолчанию" Foreground="Gray"/>
+                    <TextBlock Text="iiko логин" Foreground="Gray"/>
                     <TextBox Text="{Binding IikoLogin}"/>
                 </StackPanel>
                 <StackPanel>
                     <TextBlock Margin="10" FontWeight="Heavy" TextWrapping="Wrap" 
                            Text="Внимание! preAlpha версия. Криптографические алгоритмы не используются, идет base64 преобразование. Только для тестирования и презентаций."/>
-                    <TextBlock Text="Пароль по умолчанию" Foreground="Gray"/>
-                    <PasswordBox x:Name="PasswordBox" Margin="2"/>
-                    
-                    <UniformGrid Rows="1">
-                        <Button Margin="2" Content="Установить в Anydesk" Command="{Binding SetDefaultAnyDeskPasswordCommand}"
-                                CommandParameter="{Binding ElementName=PasswordBox}"/>
-                        <Button Margin="2" Content="Установить в iiko" Command="{Binding SetDefaultIikoPasswordCommand}"
-                                CommandParameter="{Binding ElementName=PasswordBox}"/>
-                    </UniformGrid>
+
+                    <TextBlock Text="iiko пароль" Foreground="Gray"/>
+                    <TextBox Text="{Binding IikoPassword}"/>
+                    <TextBlock Text="AnyDesk пароль" Foreground="Gray"/>
+                    <TextBox Text="{Binding AnyDeskPassword}"/>
+                    <PasswordBox>
+                        <Behaviors:Interaction.Triggers>
+                            <Behaviors:EventTrigger EventName="PasswordChanged">
+                                <Behaviors:InvokeCommandAction 
+                                    Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=PasswordBox}}"
+                                    CommandParameter="{Binding ElementName=PasswordBox}"/>
+                            </Behaviors:EventTrigger>
+                        </Behaviors:Interaction.Triggers>
+                    </PasswordBox>
                 </StackPanel>
-                <UniformGrid Margin="3,30" Rows="1">
+                <UniformGrid Margin="3" Rows="1">
                     <Button Content="Отменить" Command="{Binding ReloadSettingsCommand}"/>
                     <Button Content="Сохранить" Command="{Binding SaveSettingsCommand}" Margin="3,0,0,0"/>
                 </UniformGrid>
+                
+
             </StackPanel>
         </Expander>
         <TextBox Margin="2" DockPanel.Dock="Top" Text="{Binding ConnectionFilter, UpdateSourceTrigger=PropertyChanged}"/>
         <Expander DockPanel.Dock="Bottom" ExpandDirection="Up" Header="Команды выбраному элемента">
             <UniformGrid Columns="3">
-                <Button Margin="2" Content="Установить пароль" Command="{Binding SetPasswordCommand}">
+                <PasswordBox x:Name="PasswordBox" Margin="2"/>
+                <Button Margin="2" Content="Установить пароль">
                     <Button.CommandParameter>
-                        <MultiBinding Converter="{StaticResource PasswordConverter}">
-                            <Binding Path="SelectedConnection"/>
+                        <MultiBinding>
+                            <Binding ElementName="SelectedConnection"/>
                             <Binding ElementName="PasswordBox"/>
                         </MultiBinding>
                     </Button.CommandParameter>
                 </Button>
+                
                 <Button Margin="2" Content="Запустить Офис" Command="{Binding LaunchOfficeCommand}" CommandParameter="{Binding SelectedConnection}"/>
                 <Button Margin="2" Content="Запустить АниДеск" Command="{Binding LaunchAnyDeskCommand}" CommandParameter="{Binding SelectedConnection}"/>
                 <Button Margin="2" Content="Дублировать" Command="{Binding AddConnectionModelCommand}" 
                     CommandParameter="{Binding SelectedConnection}"/>
                 <Button Margin="2" Content="Удалить" Command="{Binding RemoveConnectionModel}"
                     CommandParameter="{Binding SelectedConnection}"/>
+
                 <Button Margin="2" Content="Позвонить" Command="{Binding CallbackCommand}" CommandParameter="{Binding SelectedConnection}"/>
             </UniformGrid>
         </Expander>
-        <DataGrid Margin="2" 
-                  ItemsSource="{Binding ConnectionsList}" 
+        <DataGrid ItemsSource="{Binding ConnectionsList}" 
                   SelectedItem="{Binding SelectedConnection}" 
                   AutoGenerateColumns="False"
                   GridLinesVisibility="Vertical"
@@ -84,14 +90,6 @@
                 <DataGridTextColumn Header="Адрес" Binding="{Binding Address}"/>
                 <DataGridTextColumn Header="Логин" Binding="{Binding Login}"/>
             </DataGrid.Columns>
-            <Behaviors:Interaction.Triggers>
-                <Behaviors:EventTrigger EventName="MouseDoubleClick">
-                    <Behaviors:InvokeCommandAction Command="{Binding LaunchOfficeCommand}" 
-                                           CommandParameter="{Binding SelectedConnection}"/>
-                    <Behaviors:InvokeCommandAction Command="{Binding LaunchAnyDeskCommand}" 
-                                           CommandParameter="{Binding SelectedConnection}"/>
-                </Behaviors:EventTrigger>
-            </Behaviors:Interaction.Triggers>
             <DataGrid.GroupStyle>
                 <GroupStyle>
                     <GroupStyle.ContainerStyle>
