@@ -7,7 +7,7 @@
         xmlns:properties="clr-namespace:supportHelper.Properties"
         xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="700">
+        Title="{Binding Title}" Height="600" Width="700">
     <Window.DataContext>
         <local:MainWindowViewModel/>
     </Window.DataContext>
@@ -101,7 +101,6 @@
                 </Behaviors:EventTrigger>
             </Behaviors:Interaction.Triggers>
             <DataGrid.GroupStyle>
-                <DataGrid.GroupStyle>
                 <GroupStyle>
                     <GroupStyle.ContainerStyle>
                         <Style TargetType="{x:Type GroupItem}">

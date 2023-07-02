@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -10,7 +11,6 @@ using System.Windows.Data;
 using System.Xml;
 using System.Xml.Linq;
 using static supportHelper.PlanFixController;
-
 namespace supportHelper;
 
 public class MainWindowViewModel : BaseModel
@@ -18,9 +18,12 @@ public class MainWindowViewModel : BaseModel
     static public ObservableCollection<ConnectionModel> ConnectionsList { get; set; } = new();
     private static readonly ICollectionView _collection = CollectionViewSource.GetDefaultView(ConnectionsList);
 
+    public string Title { get => _Title; set => Set(ref _Title, value); }
+    private string _Title = "Support Helper";
+
     public string ConnectionFilter
     {
-        get => _ConnectionFilter;
+        get => _ConnectionFilter; 
         set { if (Set(ref _ConnectionFilter, value))  _collection.Refresh(); }
     }
     private string _ConnectionFilter = string.Empty;
@@ -28,14 +31,29 @@ public class MainWindowViewModel : BaseModel
     public ConnectionModel? SelectedConnection
     {
         get => _SelectedConnection;
-        set { Set(ref _SelectedConnection, value); } 
+        set 
+        {
+            if (Set(ref _SelectedConnection, value))
+            {
+                string s = "Support Helper";
+                if (value is not null)
+                {
+                    if (!string.IsNullOrWhiteSpace(value.Client))
+                        s += " - " + value.Client;
+
+                    if (!string.IsNullOrWhiteSpace(value.Name))
+                        s += " - " + value.Name;
+                }
+                Title = s;
+            }
+        } 
     }
     private ConnectionModel? _SelectedConnection;
 
     public MainWindowViewModel()
     {
         
-        LoadConnectionsFromPlanfix();
+        LoadConnectionsFromPlanfix(ConnectionsList);
 
         _collection.SortDescriptions.Add(new SortDescription("Name", ListSortDirection.Ascending));
         _collection.SortDescriptions.Add(new SortDescription("Client", ListSortDirection.Ascending));
@@ -45,12 +63,7 @@ public class MainWindowViewModel : BaseModel
             || c.Client.Contains(ConnectionFilter, StringComparison.CurrentCultureIgnoreCase); ;
     }
     
-    static private async void LoadConnectionsFromPlanfix()
-    {
-        await foreach (DirectoryEntry? i in GetEntryList())
-            if (i is not null && i.CustomFieldData is not null) 
-                ConnectionsList.Add(new ConnectionModel(i));
-    }
+
     #region Command
     public RelayCommand LaunchOfficeCommand
     {

@@ -14,7 +14,13 @@ public static class PlanFixController
 
     static PlanFixController() =>
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Properties.Settings.Default.AccessToken);
-    
+
+    static public async void LoadConnectionsFromPlanfix(ICollection<ConnectionModel> values)
+    {
+        await foreach (DirectoryEntry? i in GetEntryList())
+            if (i is not null && i.CustomFieldData is not null)
+                values.Add(new ConnectionModel(i));
+    }
 
     public static async void DeleteDirectoryEntry(ConnectionModel model)
     {
@@ -44,7 +50,7 @@ public static class PlanFixController
         }
     }
 
-    public static async IAsyncEnumerable<DirectoryEntry?> GetEntryList()
+    private static async IAsyncEnumerable<DirectoryEntry?> GetEntryList()
     {
         string fieds = "name, key, parentKey"; await foreach (var n in GetFieldsIds()) { fieds += ", " + n; }
 
@@ -66,7 +72,7 @@ public static class PlanFixController
         }
     }
 
-    static async IAsyncEnumerable<string?> GetFieldsIds()
+    private static async IAsyncEnumerable<string?> GetFieldsIds()
     {
         using var resp = await client.GetAsync($"directory/{Properties.Settings.Default.DirectoryId}?fields=fields");
         DirectoryByIdResponse? r = await resp.Content.ReadFromJsonAsync<DirectoryByIdResponse>();
