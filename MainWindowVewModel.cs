@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -218,6 +219,52 @@ public class MainWindowViewModel : BaseModel
 
     public RelayCommand ReloadSettingsCommand { get => reloadSettingsCommand ??= new RelayCommand(obj => { Properties.Settings.Default.Reload(); }); }
     private RelayCommand? reloadSettingsCommand;
+
+    public RelayCommand SetDefaultIikoPasswordCommand
+    {
+        get => setDefaultIikoPasswordCommand ??= new RelayCommand(obj =>
+        {
+            if (obj is PasswordBox pb)
+            {
+                Properties.Settings.Default.IikoPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(pb.Password));
+            }
+        });
+    }
+    private RelayCommand? setDefaultIikoPasswordCommand;
+
+    public RelayCommand SetDefaultAnyDeskPasswordCommand
+    {
+        get => setDefaultAnyDeskPasswordCommand ??= new RelayCommand(obj =>
+        {
+            if (obj is PasswordBox pb)
+            {
+                Properties.Settings.Default.AnyDeskPassword = Convert.ToBase64String(Encoding.UTF8.GetBytes(pb.Password));
+            }
+        });
+    }
+    private RelayCommand? setDefaultAnyDeskPasswordCommand;
+
+    public RelayCommand SetPasswordCommand
+    {
+        get => setPasswordCommand ??= new RelayCommand(obj => {
+            if (obj is Tuple<ConnectionModel, PasswordBox> param)
+            {
+                DirectoryEntry entry = new()
+                {
+                    Key = param.Item1.key,
+                    ParentKey = param.Item1.parentKey,
+                    CustomFieldData = new List<CustomFieldDatum>
+                    {
+                        new CustomFieldDatum { Field = new Field { Id = param.Item1.passwordId },
+                            Value=Convert.ToBase64String(Encoding.UTF8.GetBytes(param.Item2.Password))
+                        }
+                    }
+                };
+                UpdateDirectoryEntry(entry);
+            }
+        }, obj => obj is not null);
+    }
+    private RelayCommand? setPasswordCommand;
     #endregion
 }
 

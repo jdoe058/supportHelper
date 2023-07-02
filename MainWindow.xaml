@@ -33,26 +33,32 @@
                     <TextBox Text="{Binding DirectoryId}"/>
                     <TextBlock Text="iiko логин" Foreground="Gray"/>
                     <TextBox Text="{Binding IikoLogin}"/>
+                    <TextBlock Text="{Binding IikoPassword}"/>
+                    <TextBlock Text="{Binding AnyDeskPassword}"/>
                 </StackPanel>
-                <StackPanel>
+                <StackPanel Margin="3">
                     <TextBlock Margin="10" FontWeight="Heavy" TextWrapping="Wrap" 
                            Text="Внимание! preAlpha версия. Криптографические алгоритмы не используются, идет base64 преобразование. Только для тестирования и презентаций."/>
 
-                    <TextBlock Text="iiko пароль" Foreground="Gray"/>
-                    <TextBox Text="{Binding IikoPassword}"/>
-                    <TextBlock Text="AnyDesk пароль" Foreground="Gray"/>
-                    <TextBox Text="{Binding AnyDeskPassword}"/>
-                    <PasswordBox>
-                        <Behaviors:Interaction.Triggers>
-                            <Behaviors:EventTrigger EventName="PasswordChanged">
-                                <Behaviors:InvokeCommandAction 
-                                    Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=PasswordBox}}"
-                                    CommandParameter="{Binding ElementName=PasswordBox}"/>
-                            </Behaviors:EventTrigger>
-                        </Behaviors:Interaction.Triggers>
-                    </PasswordBox>
+                    <TextBlock Text="Установить пароль" Foreground="Gray"/>
+                    <PasswordBox Margin="0,3" x:Name="PasswordBox"/>
+                    <UniformGrid Rows="1">
+                        <Button Content="В iiko" Command="{Binding SetDefaultIikoPasswordCommand}"
+                                CommandParameter="{Binding ElementName=PasswordBox}"/>
+                        <Button Content="В AnyDesk" Command="{Binding SetDefaultAnyDeskPasswordCommand}" 
+                                CommandParameter="{Binding ElementName=PasswordBox}" Margin="3,0"/>
+                        <Button Content="В текущий элем." Command="{Binding SetPasswordCommand}">
+                            <Button.CommandParameter>
+                                <MultiBinding Converter="{StaticResource PasswordConverter}">
+                                    <Binding Path="SelectedConnection"/>
+                                    <Binding ElementName="PasswordBox"/>
+                                </MultiBinding>
+                            </Button.CommandParameter>
+                        </Button>
+
+                    </UniformGrid>
                 </StackPanel>
-                <UniformGrid Margin="3" Rows="1">
+                <UniformGrid Margin="3,30" Rows="1">
                     <Button Content="Отменить" Command="{Binding ReloadSettingsCommand}"/>
                     <Button Content="Сохранить" Command="{Binding SaveSettingsCommand}" Margin="3,0,0,0"/>
                 </UniformGrid>
@@ -63,15 +69,7 @@
         <TextBox Margin="2" DockPanel.Dock="Top" Text="{Binding ConnectionFilter, UpdateSourceTrigger=PropertyChanged}"/>
         <Expander DockPanel.Dock="Bottom" ExpandDirection="Up" Header="Команды выбраному элемента">
             <UniformGrid Columns="3">
-                <Button Margin="2" Content="Установить пароль" Command="{Binding SetPasswordCommand}">
-                    <Button.CommandParameter>
-                        <MultiBinding Converter="{StaticResource PasswordConverter}">
-                            <Binding Path="SelectedConnection"/>
-                            <Binding ElementName="PasswordBox"/>
-                        </MultiBinding>
-                    </Button.CommandParameter>
-                </Button>
-                
+               
                 <Button Margin="2" Content="Запустить Офис" Command="{Binding LaunchOfficeCommand}" CommandParameter="{Binding SelectedConnection}"/>
                 <Button Margin="2" Content="Запустить АниДеск" Command="{Binding LaunchAnyDeskCommand}" CommandParameter="{Binding SelectedConnection}"/>
                 <Button Margin="2" Content="Дублировать" Command="{Binding AddConnectionModelCommand}" 
