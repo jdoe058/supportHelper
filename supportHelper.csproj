@@ -8,6 +8,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="packages\FontAwesome.WPF.4.7.0.9\**" />
+    <Compile Remove="packages\Microsoft.Xaml.Behaviors.Wpf.1.1.39\**" />
+    <EmbeddedResource Remove="packages\FontAwesome.WPF.4.7.0.9\**" />
+    <EmbeddedResource Remove="packages\Microsoft.Xaml.Behaviors.Wpf.1.1.39\**" />
+    <None Remove="packages\FontAwesome.WPF.4.7.0.9\**" />
+    <None Remove="packages\Microsoft.Xaml.Behaviors.Wpf.1.1.39\**" />
+    <Page Remove="packages\FontAwesome.WPF.4.7.0.9\**" />
+    <Page Remove="packages\Microsoft.Xaml.Behaviors.Wpf.1.1.39\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FontAwesome" Version="4.7.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
   </ItemGroup>
 
@@ -24,6 +36,10 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="packages\" />
   </ItemGroup>
 
 </Project>

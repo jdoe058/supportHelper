@@ -8,6 +8,10 @@ namespace supportHelper;
 
 public class ConnectionModel : BaseModel, IEditableObject
 {
+    public static readonly string csvHeader = "Имя;Клиент;Пароль;Путь"; 
+
+    public string CsvLine => $"{_Name};{_Client};{_Password};{_Login}" + (string.IsNullOrWhiteSpace(_Address)?"":$",{_Address}");
+
     public string Client  { get => _Client;  set => Set(ref _Client, value);  } private string _Client  = string.Empty;
 
     public string Name    { get => _Name;    set => Set(ref _Name, value);    } private string _Name    = string.Empty;
@@ -45,17 +49,27 @@ public class ConnectionModel : BaseModel, IEditableObject
         
         foreach (var item in directoryEntry.CustomFieldData)
         {
-            
-            switch (item?.Field?.Name)
+            if (item.Field is null) continue;
+
+            switch (item.Field.Name)
             {
-                case "Клиент": Client    = item.Value is null ? "" : item.Value; clientId   = item.Field.Id; break;
-                case "Имя":    Name      = item.Value is null ? "" : item.Value; nameId     = item.Field.Id; break;
-                case "Адрес":  Address   = item.Value; addressId  = item.Field.Id; break;
-                case "Логин":  Login     = item.Value; loginId    = item.Field.Id; break;
-                case "Пароль": _Password = item.Value; passwordId = item.Field.Id; break;
+                case "Имя": nameId = item.Field.Id; Name = item.Value; break;
+                case "Клиент": clientId = item.Field.Id; Client = item.Value; break;
+                //case "Адрес": addressId = item.Field.Id; Address = item.Value; break;
+                case "Пароль": passwordId = item.Field.Id; _Password = item.Value; break;
+                case "Путь":
+                    loginId = item.Field.Id;
+
+                    if (item.Value is not null)
+                    {
+                        var v = item.Value.Split(',');
+                        Login = v[0];
+                        if (v.Length > 1)
+                            Address = v[1];
+                    }
+                    break;
             }
         }
-        
     }
 
     public DirectoryEntry ToDirectoryEntry()
@@ -68,8 +82,8 @@ public class ConnectionModel : BaseModel, IEditableObject
             { 
                 new CustomFieldDatum { Field = new Field { Id = nameId, Name="Имя"}, Value = Name}, 
                 new CustomFieldDatum { Field = new Field { Id = clientId, Name="Клиент"}, Value = Client }, 
-                new CustomFieldDatum { Field = new Field { Id = addressId, Name="Адрес"}, Value = Address }, 
-                new CustomFieldDatum { Field = new Field { Id = loginId, Name="Логин"}, Value = Login }, 
+                //new CustomFieldDatum { Field = new Field { Id = addressId, Name="Адрес"}, Value = Address }, 
+                new CustomFieldDatum { Field = new Field { Id = loginId, Name="Путь"}, Value = Login + (string.IsNullOrWhiteSpace(Address)?"":$",{Address}")}, 
                 new CustomFieldDatum { Field = new Field { Id = passwordId, Name="Пароль"}, Value = _Password }, 
             }
         };
@@ -110,8 +124,14 @@ public class ConnectionModel : BaseModel, IEditableObject
         if (inEdit) 
         { 
             inEdit = false;
+            if (backupCopy is not null && (
+                backupCopy?._Name != _Name 
+                || backupCopy?._Login != _Login 
+                || backupCopy?._Client != _Client 
+                || backupCopy?._Address != _Address 
+                || backupCopy?._Password != _Password))
+                UpdateDirectoryEntry(ToDirectoryEntry(),false);
             backupCopy = null;
-            UpdateDirectoryEntry(ToDirectoryEntry());
         }
     }
     #endregion

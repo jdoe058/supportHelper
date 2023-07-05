@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,6 +14,7 @@ using System.Xml;
 using System.Xml.Linq;
 using static supportHelper.PlanFixController;
 namespace supportHelper;
+
 
 public class MainWindowViewModel : BaseModel
 {

@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using System.Windows;
 
 namespace supportHelper;
 
@@ -17,9 +18,18 @@ public static class PlanFixController
 
     static public async void LoadConnectionsFromPlanfix(ICollection<ConnectionModel> values)
     {
+        List<string> csvData = new List<string> { ConnectionModel.csvHeader };
+        
         await foreach (DirectoryEntry? i in GetEntryList())
             if (i is not null && i.CustomFieldData is not null)
-                values.Add(new ConnectionModel(i));
+            {
+                var model = new ConnectionModel(i);
+                values.Add(model);
+                csvData.Add(model.CsvLine);
+            }
+        
+        //try { System.IO.File.WriteAllLines(@".\supportHelper.csv", csvData); }
+        //catch (Exception ex) { _ = MessageBox.Show($"Нет доступа к итоговому файлу.\nВозможно он открыт в Excel'е.\n\n{ex}"); return; }
     }
 
     public static async void DeleteDirectoryEntry(ConnectionModel model)
@@ -34,7 +44,7 @@ public static class PlanFixController
     public static async void UpdateDirectoryEntry(DirectoryEntry entry, bool add = false)
     {
         var method = $"directory/{Properties.Settings.Default.DirectoryId}/entry/";
-        if (!add) method += entry.Key;
+        if (!add)  method += entry.Key; 
 
 
         using var response = await client.PostAsJsonAsync(method,entry); 
@@ -91,10 +101,10 @@ public static class PlanFixController
         public string Name { get; set; } = string.Empty;
 
         [JsonPropertyName("type")]
-        public int Type { get; set; } = 0;
+        public int? Type { get; set; }
 
         [JsonPropertyName("objectType")]
-        public int ObjectType { get; set; } = 0;
+        public int? ObjectType { get; set; }
     }
 
     public class CustomFieldDatum
@@ -130,7 +140,7 @@ public static class PlanFixController
         public int ParentKey { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public string? Name { get; set; }
 
         [JsonPropertyName("customFieldData")]
         public List<CustomFieldDatum>? CustomFieldData { get; set; }
